@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+
+# Lambda Build Artifacts
+# We explicitly ignore the 'pkg' directory,
+# but we DO track the final processor_lambda.zip in this project
+# to show a complete, runnable state at each commit.
+processor-lambda/pkg/
