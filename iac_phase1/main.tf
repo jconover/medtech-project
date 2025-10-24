@@ -77,6 +77,21 @@ resource "aws_route_table_association" "public" {
   route_table_id = aws_route_table.public.id
 }
 
+# Route table for private subnets
+resource "aws_route_table" "private" {
+  vpc_id = aws_vpc.main.id
+
+  tags = {
+    Name = "medtech-private-rt"
+  }
+}
+
+resource "aws_route_table_association" "private" {
+  count          = 2
+  subnet_id      = aws_subnet.private[count.index].id
+  route_table_id = aws_route_table.private.id
+}
+
 # ------------------------------------------------------------------------------
 # RESOURCES FOR DATA LAKE & QUEUEING
 # ------------------------------------------------------------------------------
@@ -176,13 +191,7 @@ resource "aws_security_group" "lambda_sg" {
   description = "Allow Lambda to access RDS and S3"
   vpc_id      = aws_vpc.main.id
 
-  # Allow egress to RDS
-  egress {
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [aws_security_group.rds_sg.id]
-  }
+  # Egress will be defined in a separate rule to break cycle
   
   # Allow egress to S3 (via VPC Endpoint)
   egress {
@@ -207,11 +216,22 @@ resource "aws_security_group_rule" "lambda_to_rds" {
   security_group_id        = aws_security_group.rds_sg.id
 }
 
+# Allow Lambda to connect out to RDS
+resource "aws_security_group_rule" "lambda_to_rds_egress" {
+  type                     = "egress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.rds_sg.id
+  security_group_id        = aws_security_group.lambda_sg.id
+}
+
 # Create a VPC Endpoint for S3 so the private Lambda can reach it
 resource "aws_vpc_endpoint" "s3" {
   vpc_id            = aws_vpc.main.id
   service_name      = "com.amazonaws.${var.aws_region}.s3"
-  route_table_ids   = [aws_vpc.main.private_route_table_ids[0], aws_vpc.main.private_route_table_ids[1]]
+  vpc_endpoint_type = "Gateway"
+  route_table_ids   = [aws_route_table.private.id]
 }
 
 # IAM Role for Lambda
