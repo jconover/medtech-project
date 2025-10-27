@@ -113,9 +113,9 @@ resource "aws_s3_bucket_public_access_block" "data_lake_pac" {
 }
 
 resource "aws_sqs_queue" "data_queue" {
-  name                      = "medtech-data-queue"
-  visibility_timeout_seconds = 300 # Give Lambda 5 mins to process
-  message_retention_seconds = 86400 # 1 day
+  name                       = "medtech-data-queue"
+  visibility_timeout_seconds = 300   # Give Lambda 5 mins to process
+  message_retention_seconds  = 86400 # 1 day
 
   tags = {
     Name = "medtech-data-queue"
@@ -151,7 +151,7 @@ resource "aws_security_group" "rds_sg" {
 
 resource "aws_db_subnet_group" "rds_subnets" {
   name       = "medtech-rds-subnet-group"
-  subnet_ids = aws_subnet.private.*.id 
+  subnet_ids = aws_subnet.private.*.id
 
   tags = {
     Name = "medtech-rds-subnets"
@@ -166,7 +166,7 @@ resource "random_password" "db_password" {
 resource "aws_db_instance" "main_db" {
   allocated_storage      = 20
   engine                 = "postgres"
-  engine_version         = "15.4"
+  engine_version         = "17.4"
   instance_class         = "db.t3.micro"
   identifier             = "medtech-db"
   db_name                = "medtechdb"
@@ -192,12 +192,12 @@ resource "aws_security_group" "lambda_sg" {
   vpc_id      = aws_vpc.main.id
 
   # Egress will be defined in a separate rule to break cycle
-  
+
   # Allow egress to S3 (via VPC Endpoint)
   egress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
+    from_port       = 443
+    to_port         = 443
+    protocol        = "tcp"
     prefix_list_ids = [aws_vpc_endpoint.s3.prefix_list_id]
   }
 
@@ -239,11 +239,11 @@ resource "aws_iam_role" "lambda_role" {
   name = "medtech-processor-lambda-role"
 
   assume_role_policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
-        Action    = "sts:AssumeRole"
-        Effect    = "Allow"
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
         Principal = {
           Service = "lambda.amazonaws.com"
         }
@@ -298,9 +298,9 @@ resource "aws_iam_policy" "lambda_policy" {
       {
         Effect = "Allow",
         Action = [
-            "logs:CreateLogGroup",
-            "logs:CreateLogStream",
-            "logs:PutLogEvents"
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
         ],
         Resource = "arn:aws:logs:*:*:*"
       }
